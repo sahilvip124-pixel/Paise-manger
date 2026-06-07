@@ -1,1141 +1,571 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-<title>Paisa Manager Pro</title>
-<meta name="description" content="Personal Finance Tracker - Salary, Expenses, Savings">
-<meta name="theme-color" content="#1a8a4a">
-<link rel="manifest" href="manifest.json">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<style>
-:root {
-  --bg: #f4f8f4;
-  --white: #ffffff;
-  --green: #1a8a4a;
-  --green2: #22c55e;
-  --green-light: #dcfce7;
-  --green-mid: #bbf7d0;
-  --red: #ef4444;
-  --red-light: #fee2e2;
-  --yellow: #f59e0b;
-  --yellow-light: #fef3c7;
-  --text: #0f2d1a;
-  --text2: #374151;
-  --muted: #6b7280;
-  --border: #d1fae5;
-  --border2: #e5e7eb;
-  --shadow: 0 2px 12px rgba(26,138,74,0.08);
-  --radius: 16px;
-}
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;overflow-x:hidden;}
-body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse 70% 40% at 100% 0%,rgba(34,197,94,0.1) 0%,transparent 60%),radial-gradient(ellipse 50% 30% at 0% 100%,rgba(26,138,74,0.06) 0%,transparent 60%);pointer-events:none;z-index:0;}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>Paisa Manager Pro - Smart Expense Tracker</title>
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    <!-- Supabase JS -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
 
-/* ── LOADER ── */
-.loader-overlay{position:fixed;inset:0;background:var(--white);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.4s;}
-.loader-overlay.hidden{opacity:0;pointer-events:none;}
-.loader-logo{font-family:'Playfair Display',serif;font-size:36px;font-weight:800;color:var(--green);margin-bottom:8px;}
-.loader-logo span{color:var(--green2);}
-.loader-sub{font-size:13px;color:var(--muted);margin-bottom:24px;}
-.spinner{width:36px;height:36px;border:3px solid var(--green-light);border-top-color:var(--green);border-radius:50%;animation:spin 0.8s linear infinite;}
-@keyframes spin{to{transform:rotate(360deg);}}
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #F5F7FA;
+            color: #1F2937;
+            overflow-x: hidden;
+        }
 
-/* ── AUTH SCREEN ── */
-.auth-screen{position:fixed;inset:0;background:var(--white);z-index:999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;display:none;}
-.auth-screen.show{display:flex;}
-.auth-logo{font-family:'Playfair Display',serif;font-size:42px;font-weight:800;color:var(--green);text-align:center;margin-bottom:4px;}
-.auth-logo span{color:var(--green2);}
-.auth-tagline{font-size:14px;color:var(--muted);text-align:center;margin-bottom:32px;}
-.auth-card{background:var(--white);border:1.5px solid var(--border);border-radius:24px;padding:28px 24px;width:100%;max-width:380px;box-shadow:0 8px 32px rgba(26,138,74,0.1);}
-.auth-tabs{display:flex;background:var(--green-light);border-radius:12px;padding:3px;margin-bottom:22px;}
-.auth-tab{flex:1;background:none;border:none;border-radius:10px;padding:9px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;color:var(--muted);transition:all 0.2s;}
-.auth-tab.active{background:var(--white);color:var(--green);box-shadow:0 2px 8px rgba(26,138,74,0.12);}
-.auth-form{display:none;}
-.auth-form.show{display:block;}
-.auth-inp-group{margin-bottom:14px;}
-.auth-label{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;display:block;}
-.auth-inp{width:100%;background:var(--bg);border:1.5px solid var(--border2);border-radius:10px;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;padding:12px 14px;outline:none;transition:border-color 0.2s;}
-.auth-inp:focus{border-color:var(--green);background:var(--white);}
-.auth-btn{width:100%;background:var(--green);color:#fff;border:none;border-radius:12px;padding:14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all 0.15s;margin-top:4px;}
-.auth-btn:hover{background:#16753f;transform:translateY(-1px);box-shadow:0 4px 16px rgba(26,138,74,0.3);}
-.auth-btn:active{transform:none;}
-.auth-divider{display:flex;align-items:center;gap:12px;margin:18px 0;}
-.auth-divider::before,.auth-divider::after{content:'';flex:1;height:1px;background:var(--border2);}
-.auth-divider span{font-size:12px;color:var(--muted);font-weight:500;}
-.guest-btn{width:100%;background:none;border:1.5px solid var(--border2);border-radius:12px;padding:13px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:600;color:var(--text2);cursor:pointer;transition:all 0.15s;}
-.guest-btn:hover{border-color:var(--green);color:var(--green);background:var(--green-light);}
-.auth-error{background:var(--red-light);color:var(--red);border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:14px;display:none;}
-.auth-error.show{display:block;}
-.auth-success{background:var(--green-light);color:var(--green);border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;margin-bottom:14px;display:none;}
-.auth-success.show{display:block;}
+        /* White + Green Theme Variables */
+        :root {
+            --bg-white: #FFFFFF;
+            --bg-light: #F0FDF4;
+            --primary-green: #10B981;
+            --primary-dark: #059669;
+            --primary-darker: #047857;
+            --text-dark: #1F2937;
+            --text-gray: #6B7280;
+            --border-green: #D1FAE5;
+            --success-light: #DCFCE7;
+            --shadow: 0 8px 20px rgba(16, 185, 129, 0.08);
+            --card-radius: 24px;
+        }
 
-/* ── MAIN APP ── */
-.main-app{display:none;}
-.main-app.show{display:block;}
-.app{position:relative;z-index:1;max-width:480px;margin:0 auto;padding-bottom:80px;}
+        /* Container & Layout */
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 16px 20px 90px 20px;
+        }
 
-/* ── HEADER ── */
-header{background:var(--white);border-bottom:1px solid var(--border);padding:14px 16px 12px;position:sticky;top:0;z-index:50;box-shadow:var(--shadow);}
-.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
-.logo{font-family:'Playfair Display',serif;font-size:20px;font-weight:800;color:var(--green);}
-.logo span{color:var(--green2);}
-.user-pill{display:flex;align-items:center;gap:8px;background:var(--green-light);border-radius:20px;padding:5px 12px 5px 6px;cursor:pointer;border:none;font-family:'Plus Jakarta Sans',sans-serif;}
-.user-avatar{width:26px;height:26px;border-radius:50%;background:var(--green);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
-.user-name{font-size:12px;font-weight:600;color:var(--green);}
-.guest-pill{background:var(--yellow-light);}
-.guest-pill .user-avatar{background:var(--yellow);}
-.guest-pill .user-name{color:var(--yellow);}
-.month-nav{display:flex;align-items:center;gap:6px;}
-.mnav-btn{background:var(--green-light);border:none;border-radius:8px;width:28px;height:28px;cursor:pointer;font-size:13px;color:var(--green);font-weight:700;display:flex;align-items:center;justify-content:center;transition:background 0.15s;}
-.mnav-btn:hover{background:var(--green-mid);}
-.month-label{font-weight:700;font-size:13px;color:var(--text);min-width:110px;text-align:center;}
-.tab-bar{display:flex;gap:0;background:var(--green-light);border-radius:12px;padding:3px;}
-.tab-btn{flex:1;background:none;border:none;border-radius:10px;padding:7px 2px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:11px;font-weight:600;color:var(--muted);transition:all 0.2s;white-space:nowrap;}
-.tab-btn.active{background:var(--white);color:var(--green);box-shadow:0 2px 8px rgba(26,138,74,0.12);}
+        /* Cards */
+        .card {
+            background: var(--bg-white);
+            border-radius: var(--card-radius);
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border-green);
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: transform 0.2s ease, box-shadow 0.2s;
+        }
+        .card:active {
+            transform: scale(0.99);
+        }
 
-/* ── SYNC BAR ── */
-.sync-bar{text-align:center;font-size:12px;font-weight:600;padding:5px;display:none;position:sticky;top:0;z-index:49;}
-.sync-bar.show{display:block;}
-.sync-bar.ok{background:var(--green-light);color:var(--green);}
-.sync-bar.err{background:var(--red-light);color:var(--red);}
-.sync-bar.info{background:var(--yellow-light);color:var(--yellow);}
+        /* Buttons */
+        .btn-primary {
+            background: var(--primary-green);
+            color: white;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 60px;
+            font-size: 16px;
+            font-weight: 600;
+            width: 100%;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+        }
+        .btn-primary:active {
+            transform: scale(0.97);
+            background: var(--primary-dark);
+        }
+        .btn-outline {
+            background: transparent;
+            border: 1.5px solid var(--primary-green);
+            color: var(--primary-green);
+            padding: 12px 18px;
+            border-radius: 60px;
+            font-weight: 600;
+            width: 100%;
+            transition: all 0.2s;
+        }
+        .btn-outline:active {
+            transform: scale(0.97);
+            background: var(--bg-light);
+        }
 
-/* ── VIEWS ── */
-.view{display:none;padding:14px 14px 0;}
-.view.active{display:block;}
+        /* Dashboard Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 14px;
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white;
+            border-radius: 20px;
+            padding: 16px;
+            border: 1px solid var(--border-green);
+            text-align: center;
+        }
+        .stat-amount {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--primary-dark);
+            margin-top: 6px;
+        }
+        .progress-bar-bg {
+            background: #E5E7EB;
+            border-radius: 30px;
+            height: 10px;
+            overflow: hidden;
+            margin: 12px 0;
+        }
+        .progress-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-green), var(--primary-dark));
+            border-radius: 30px;
+            transition: width 0.5s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+        }
 
-/* ── CARD ── */
-.card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:14px;}
-.card-title{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:14px;}
+        /* Categories */
+        .category-badge {
+            background: var(--bg-light);
+            padding: 8px 14px;
+            border-radius: 40px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--primary-dark);
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
 
-/* ── HERO ── */
-.hero-card{background:linear-gradient(135deg,var(--green) 0%,#0f5c30 100%);border-radius:20px;padding:22px 20px;margin-bottom:14px;box-shadow:0 8px 32px rgba(26,138,74,0.3);position:relative;overflow:hidden;}
-.hero-card::after{content:'₹';position:absolute;right:-8px;top:-16px;font-size:130px;font-family:'Playfair Display',serif;font-weight:800;color:rgba(255,255,255,0.05);line-height:1;pointer-events:none;}
-.hero-lbl{font-size:11px;color:rgba(255,255,255,0.65);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:4px;}
-.hero-amt{font-family:'Playfair Display',serif;font-size:34px;font-weight:800;color:#fff;letter-spacing:-1px;margin-bottom:16px;}
-.hero-amt.danger{color:#fca5a5;}
-.hero-grid{display:grid;grid-template-columns:1fr 1fr 1fr;}
-.hero-stat{text-align:center;}
-.hero-stat+.hero-stat{border-left:1px solid rgba(255,255,255,0.15);}
-.hero-stat-val{font-weight:700;font-size:13px;color:#fff;margin-bottom:2px;}
-.hero-stat-lbl{font-size:10px;color:rgba(255,255,255,0.55);text-transform:uppercase;}
-.prog-wrap{margin-top:14px;}
-.prog-lbl{display:flex;justify-content:space-between;font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:5px;}
-.prog-track{height:5px;background:rgba(255,255,255,0.15);border-radius:5px;overflow:hidden;}
-.prog-fill{height:100%;border-radius:5px;background:var(--green2);transition:width 0.7s cubic-bezier(.25,.8,.25,1);}
-.prog-fill.warn{background:var(--yellow);}
-.prog-fill.danger{background:#fca5a5;}
+        /* Animations */
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(25px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .expense-item {
+            animation: slideUp 0.25s ease;
+        }
+        .ripple {
+            position: relative;
+            overflow: hidden;
+        }
+        .ripple:after {
+            content: "";
+            display: block;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            background-image: radial-gradient(circle, #fff 10%, transparent 10%);
+            background-repeat: no-repeat;
+            background-position: 50%;
+            transform: scale(10, 10);
+            opacity: 0;
+            transition: transform 0.4s, opacity 0.6s;
+        }
+        .ripple:active:after {
+            transform: scale(0, 0);
+            opacity: 0.3;
+            transition: 0s;
+        }
 
-/* ── SAVINGS BAR ── */
-.sbar-track{height:10px;background:var(--green-light);border-radius:10px;overflow:hidden;margin-bottom:6px;}
-.sbar-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--green),var(--green2));transition:width 0.7s;}
-.sbar-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);}
+        /* Onboarding Overlay */
+        .onboarding-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: white;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 30px;
+            transition: 0.3s;
+        }
+        .onb-slide {
+            text-align: center;
+            max-width: 320px;
+            animation: fadeIn 0.4s;
+        }
+        .onb-icon {
+            font-size: 70px;
+            color: var(--primary-green);
+            margin-bottom: 30px;
+        }
+        .dots {
+            display: flex;
+            gap: 12px;
+            margin: 35px 0;
+        }
+        .dot {
+            width: 8px;
+            height: 8px;
+            background: #CBD5E1;
+            border-radius: 10px;
+            transition: 0.2s;
+        }
+        .dot.active {
+            width: 28px;
+            background: var(--primary-green);
+        }
 
-/* ── CAT BARS ── */
-.cat-bar-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
-.cat-bar-emoji{font-size:18px;width:26px;text-align:center;}
-.cat-bar-body{flex:1;min-width:0;}
-.cat-bar-head{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;font-weight:500;}
-.cat-track{height:5px;background:var(--green-light);border-radius:5px;overflow:hidden;}
-.cat-fill{height:100%;border-radius:5px;transition:width 0.6s;}
-.badge{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;}
-.badge-green{background:var(--green-light);color:var(--green);}
-.badge-red{background:var(--red-light);color:var(--red);}
-.badge-yellow{background:var(--yellow-light);color:var(--yellow);}
-
-/* ── ADD FORM ── */
-.cat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px;}
-.cat-btn{background:var(--bg);border:1.5px solid var(--border2);border-radius:12px;padding:10px 4px 8px;cursor:pointer;text-align:center;transition:all 0.15s;color:var(--text);}
-.cat-btn.active,.cat-btn:hover{border-color:var(--green);background:var(--green-light);}
-.cat-btn .cb-emoji{font-size:20px;display:block;margin-bottom:3px;}
-.cat-btn .cb-name{font-size:10px;color:var(--muted);font-weight:600;}
-.cat-btn.active .cb-name{color:var(--green);}
-.inp-label{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:6px;display:block;}
-.inp{width:100%;background:var(--bg);border:1.5px solid var(--border2);border-radius:10px;color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;padding:11px 13px;outline:none;transition:border-color 0.2s;}
-.inp:focus{border-color:var(--green);background:var(--white);}
-.inp-wrap{position:relative;}
-.inp-pfx{position:absolute;left:13px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px;font-weight:600;}
-.inp-wrap .inp{padding-left:26px;}
-select.inp{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath fill='%236b7280' d='M5 6L0 0h10z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 13px center;padding-right:32px;}
-.ig{margin-bottom:12px;}
-.btn{border:none;border-radius:10px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;transition:all 0.15s;}
-.btn-primary{background:var(--green);color:#fff;padding:12px 20px;font-size:14px;width:100%;}
-.btn-primary:hover{background:#16753f;}
-.btn-outline{background:none;border:1.5px solid var(--border2);color:var(--text2);padding:10px 16px;font-size:13px;width:100%;margin-top:8px;}
-.btn-outline:hover{border-color:var(--green);color:var(--green);background:var(--green-light);}
-.btn-danger-outline{background:none;border:1.5px solid var(--red);color:var(--red);padding:10px 16px;font-size:13px;width:100%;margin-top:8px;border-radius:10px;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;}
-
-/* ── EXP LIST ── */
-.exp-list{display:flex;flex-direction:column;gap:8px;}
-.exp-item{background:var(--white);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:10px;box-shadow:var(--shadow);animation:fadeUp 0.25s ease;}
-@keyframes fadeUp{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:none;}}
-.exp-emoji{font-size:18px;width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--green-light);border-radius:8px;}
-.exp-info{flex:1;min-width:0;}
-.exp-note{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.exp-meta{font-size:11px;color:var(--muted);margin-top:1px;}
-.exp-amt{font-family:'Playfair Display',serif;font-weight:700;font-size:15px;color:var(--red);}
-.exp-del{background:none;border:none;cursor:pointer;color:var(--muted);font-size:16px;padding:4px;border-radius:6px;line-height:1;transition:color 0.15s;}
-.exp-del:hover{color:var(--red);}
-
-/* ── CALENDAR ── */
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;}
-.cal-day-hd{font-size:10px;font-weight:700;color:var(--muted);text-align:center;padding:4px 0;text-transform:uppercase;}
-.cal-day{aspect-ratio:1;border-radius:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;font-size:12px;font-weight:600;transition:all 0.15s;position:relative;border:1.5px solid transparent;}
-.cal-day:hover{background:var(--green-light);}
-.cal-day.has-exp{background:var(--green-light);color:var(--green);}
-.cal-day.today{border-color:var(--green);color:var(--green);font-weight:800;}
-.cal-day.selected{background:var(--green)!important;color:#fff!important;}
-.cal-day.empty{cursor:default;}
-.cal-dot{width:4px;height:4px;border-radius:50%;background:var(--green2);position:absolute;bottom:3px;}
-.cal-day.selected .cal-dot{background:rgba(255,255,255,0.7);}
-
-/* ── CHART ── */
-.chart-wrap{overflow-x:auto;padding-bottom:8px;}
-.bar-chart{display:flex;align-items:flex-end;gap:6px;height:110px;min-width:500px;}
-.bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;}
-.bar-rect{width:100%;border-radius:5px 5px 0 0;transition:height 0.6s;min-height:4px;}
-.bar-rect:hover{opacity:0.8;}
-.bar-lbl{font-size:9px;color:var(--muted);font-weight:600;text-transform:uppercase;}
-
-/* ── HISTORY LIST ── */
-.month-hist-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border2);cursor:pointer;}
-.month-hist-item:last-child{border-bottom:none;}
-.mhi-bar-wrap{flex:1;}
-.mhi-bar-track{height:6px;background:var(--green-light);border-radius:6px;overflow:hidden;}
-.mhi-bar-fill{height:100%;border-radius:6px;background:linear-gradient(90deg,var(--green),var(--green2));}
-.mhi-amt{font-family:'Playfair Display',serif;font-weight:700;font-size:13px;color:var(--red);min-width:65px;text-align:right;}
-
-/* ── REC ITEMS ── */
-.rec-item{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border2);}
-.rec-item:last-child{border-bottom:none;}
-
-/* ── GUEST BANNER ── */
-.guest-banner{background:linear-gradient(135deg,#fef3c7,#fde68a);border:1.5px solid var(--yellow);border-radius:14px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;gap:12px;}
-.guest-banner-icon{font-size:28px;}
-.guest-banner-text{flex:1;}
-.guest-banner-title{font-weight:700;font-size:14px;color:#92400e;}
-.guest-banner-sub{font-size:12px;color:#a16207;margin-top:2px;}
-.guest-banner-btn{background:var(--yellow);color:#fff;border:none;border-radius:10px;padding:8px 14px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;}
-
-/* ── EMPTY ── */
-.empty{text-align:center;padding:24px 16px;color:var(--muted);font-size:13px;}
-.empty .ei{font-size:32px;margin-bottom:8px;}
-
-/* ── TOAST ── */
-.toast{position:fixed;bottom:88px;left:50%;transform:translateX(-50%) translateY(10px);background:var(--green);color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;font-weight:600;opacity:0;pointer-events:none;transition:all 0.3s;z-index:9999;white-space:nowrap;box-shadow:0 4px 16px rgba(26,138,74,0.3);}
-.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
-.toast.err{background:var(--red);}
-.toast.warn{background:var(--yellow);}
-</style>
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(4px);
+            justify-content: center;
+            align-items: center;
+            z-index: 1100;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 32px;
+            width: 90%;
+            max-width: 380px;
+            padding: 24px;
+            animation: modalPop 0.2s ease-out;
+        }
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.92); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        input, select {
+            width: 100%;
+            padding: 14px;
+            border-radius: 60px;
+            border: 1px solid #E2E8F0;
+            font-size: 15px;
+            margin-bottom: 12px;
+            background: white;
+        }
+        .flex-between {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .text-green { color: var(--primary-green); font-weight: bold; }
+        hr { margin: 16px 0; border-color: var(--border-green); }
+    </style>
 </head>
 <body>
 
-<!-- LOADER -->
-<div class="loader-overlay" id="loader">
-  <div class="loader-logo">Paisa<span>Pro</span></div>
-  <div class="loader-sub">Aapka personal finance tracker</div>
-  <div class="spinner"></div>
-</div>
-
-<!-- AUTH SCREEN -->
-<div class="auth-screen" id="authScreen">
-  <div style="text-align:center;margin-bottom:8px">
-    <div class="auth-logo">Paisa<span>Pro</span></div>
-    <div class="auth-tagline">Apna paisa, apna hisaab 💰</div>
-  </div>
-  <div class="auth-card">
-    <div class="auth-tabs">
-      <button class="auth-tab active" onclick="switchAuthTab('login')">🔐 Login</button>
-      <button class="auth-tab" onclick="switchAuthTab('register')">✨ Register</button>
-    </div>
-
-    <!-- ERROR / SUCCESS -->
-    <div class="auth-error" id="authError"></div>
-    <div class="auth-success" id="authSuccess"></div>
-
-    <!-- LOGIN FORM -->
-    <div class="auth-form show" id="loginForm">
-      <div class="auth-inp-group">
-        <label class="auth-label">📧 Email</label>
-        <input class="auth-inp" type="email" id="loginEmail" placeholder="aapka@email.com">
-      </div>
-      <div class="auth-inp-group">
-        <label class="auth-label">🔑 Password</label>
-        <input class="auth-inp" type="password" id="loginPassword" placeholder="Password">
-      </div>
-      <button class="auth-btn" onclick="doLogin()" id="loginBtn">Login Karo →</button>
-    </div>
-
-    <!-- REGISTER FORM -->
-    <div class="auth-form" id="registerForm">
-      <div class="auth-inp-group">
-        <label class="auth-label">👤 Aapka Naam</label>
-        <input class="auth-inp" type="text" id="regName" placeholder="e.g. Sahil">
-      </div>
-      <div class="auth-inp-group">
-        <label class="auth-label">📧 Email</label>
-        <input class="auth-inp" type="email" id="regEmail" placeholder="aapka@email.com">
-      </div>
-      <div class="auth-inp-group">
-        <label class="auth-label">🔑 Password</label>
-        <input class="auth-inp" type="password" id="regPassword" placeholder="Min 6 characters">
-      </div>
-      <button class="auth-btn" onclick="doRegister()" id="registerBtn">Account Banao →</button>
-    </div>
-
-    <div class="auth-divider"><span>ya</span></div>
-    <button class="guest-btn" onclick="continueAsGuest()">👤 Guest ke taur pe continue karo</button>
-    <div style="font-size:11px;color:var(--muted);text-align:center;margin-top:10px">Guest mode mein data sirf is phone pe rahega</div>
-  </div>
-</div>
-
-<!-- MAIN APP -->
-<div class="main-app" id="mainApp">
-<div class="app">
-
-<div class="sync-bar" id="syncBar"></div>
-
-<header>
-  <div class="header-top">
-    <div class="logo">Paisa<span>Pro</span></div>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <div class="month-nav">
-        <button class="mnav-btn" onclick="changeMonth(-1)">‹</button>
-        <div class="month-label" id="monthLabel"></div>
-        <button class="mnav-btn" onclick="changeMonth(1)">›</button>
-      </div>
-      <button class="user-pill" id="userPill" onclick="showUserMenu()">
-        <div class="user-avatar" id="userAvatar">?</div>
-        <div class="user-name" id="userName">Guest</div>
-      </button>
-    </div>
-  </div>
-  <div class="tab-bar">
-    <button class="tab-btn active" onclick="switchTab('home',this)">🏠 Home</button>
-    <button class="tab-btn" onclick="switchTab('add',this)">➕ Add</button>
-    <button class="tab-btn" onclick="switchTab('calendar',this)">📅 Cal</button>
-    <button class="tab-btn" onclick="switchTab('history',this)">📊 History</button>
-    <button class="tab-btn" onclick="switchTab('settings',this)">⚙️ Setup</button>
-  </div>
-</header>
-
-<!-- HOME -->
-<div class="view active" id="view-home">
-  <div id="guestBanner"></div>
-  <div class="hero-card">
-    <div class="hero-lbl">Bacha Hua Paisa</div>
-    <div class="hero-amt" id="heroBalance">₹0</div>
-    <div class="hero-grid">
-      <div class="hero-stat"><div class="hero-stat-val" id="hSalary">₹0</div><div class="hero-stat-lbl">💼 Salary</div></div>
-      <div class="hero-stat"><div class="hero-stat-val" id="hExpense">₹0</div><div class="hero-stat-lbl">💸 Kharch</div></div>
-      <div class="hero-stat"><div class="hero-stat-val" id="hSaved">₹0</div><div class="hero-stat-lbl">🏦 Savings</div></div>
-    </div>
-    <div class="prog-wrap">
-      <div class="prog-lbl"><span>Kharch vs Salary</span><span id="progPct">0%</span></div>
-      <div class="prog-track"><div class="prog-fill" id="progFill" style="width:0"></div></div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="card-title">🎯 Savings Goal</div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div>
-        <div style="font-family:'Playfair Display',serif;font-size:22px;font-weight:800;color:var(--green)" id="savedAmt">₹0</div>
-        <div style="font-size:12px;color:var(--muted)" id="savedSub">Goal set nahi hua</div>
-      </div>
-      <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:800;color:var(--green)" id="savedBadge">—</div>
-    </div>
-    <div class="sbar-track"><div class="sbar-fill" id="sbarFill" style="width:0"></div></div>
-    <div class="sbar-labels"><span>₹0</span><span id="sbarGoal">Setup mein goal set karo</span></div>
-  </div>
-  <div class="card">
-    <div class="card-title">📊 Category Breakdown</div>
-    <div id="catBreakdown"><div class="empty"><div class="ei">📭</div>Is mahine koi expense nahi</div></div>
-  </div>
-  <div class="card" id="recCard" style="display:none">
-    <div class="card-title">🔁 Recurring (Auto)</div>
-    <div id="recHomeList"></div>
-  </div>
-</div>
-
-<!-- ADD -->
-<div class="view" id="view-add">
-  <div class="card">
-    <div class="card-title">➕ Expense Daalo</div>
-    <div class="cat-grid" id="catGrid"></div>
-    <div class="ig"><label class="inp-label">💰 Amount</label>
-      <div class="inp-wrap"><span class="inp-pfx">₹</span><input class="inp" type="number" id="expAmt" placeholder="0" min="0"></div>
-    </div>
-    <div class="ig"><label class="inp-label">📝 Note</label>
-      <input class="inp" type="text" id="expNote" placeholder="e.g. Lunch, Metro, Amazon...">
-    </div>
-    <div class="ig"><label class="inp-label">📅 Date</label>
-      <input class="inp" type="date" id="expDate">
-    </div>
-    <button class="btn btn-primary" id="addBtn" onclick="addExpense()">+ Expense Daalo</button>
-  </div>
-  <div class="card" id="budgetAlertCard" style="display:none">
-    <div class="card-title">⚠️ Budget Alerts</div>
-    <div id="budgetAlerts"></div>
-  </div>
-  <div class="card">
-    <div class="card-title">🧾 Is Mahine Ki Entries</div>
-    <div id="expList"><div class="empty"><div class="ei">🧾</div>Koi entry nahi</div></div>
-  </div>
-</div>
-
-<!-- CALENDAR -->
-<div class="view" id="view-calendar">
-  <div class="card">
-    <div class="card-title" id="calTitle">📅 Calendar</div>
-    <div class="cal-grid" id="calDaysHeader"></div>
-    <div style="height:8px"></div>
-    <div class="cal-grid" id="calGrid"></div>
-  </div>
-  <div class="card">
-    <div class="card-title" id="dayCardTitle">Koi din select nahi</div>
-    <div id="dayExpList"><div class="empty"><div class="ei">📅</div>Calendar mein din tap karo</div></div>
-  </div>
-</div>
-
-<!-- HISTORY -->
-<div class="view" id="view-history">
-  <div class="card">
-    <div class="card-title">📈 Monthly Kharch Chart</div>
-    <div class="chart-wrap"><div class="bar-chart" id="monthChart"></div></div>
-  </div>
-  <div class="card">
-    <div class="card-title">🗓️ Har Mahine Ka Hisaab</div>
-    <div id="monthHistList"><div class="empty"><div class="ei">📭</div>Koi history nahi</div></div>
-  </div>
-  <div class="card">
-    <div class="card-title">⬇️ Export</div>
-    <div style="display:flex;gap:10px">
-      <button class="btn btn-primary" style="flex:1" onclick="exportCSV()">📄 CSV</button>
-      <button class="btn btn-outline" style="flex:1;margin:0" onclick="exportJSON()">💾 JSON</button>
-    </div>
-  </div>
-</div>
-
-<!-- SETTINGS -->
-<div class="view" id="view-settings">
-  <div class="card">
-    <div class="card-title">💼 Monthly Setup</div>
-    <div class="ig"><label class="inp-label">Salary</label>
-      <div class="inp-wrap"><span class="inp-pfx">₹</span><input class="inp" type="number" id="setSalary" placeholder="e.g. 25000"></div>
-    </div>
-    <div class="ig"><label class="inp-label">🎯 Savings Goal</label>
-      <div class="inp-wrap"><span class="inp-pfx">₹</span><input class="inp" type="number" id="setSavingsGoal" placeholder="e.g. 5000"></div>
-    </div>
-    <button class="btn btn-primary" onclick="saveGlobalSettings()">✅ Save Karo</button>
-  </div>
-  <div class="card">
-    <div class="card-title">🚦 Category Budget Limits</div>
-    <div id="budgetLimitsForm"></div>
-    <button class="btn btn-outline" onclick="saveBudgetLimits()">💾 Limits Save Karo</button>
-  </div>
-  <div class="card">
-    <div class="card-title">🔁 Recurring Expenses</div>
-    <div class="ig"><label class="inp-label">Category</label><select class="inp" id="recCat"></select></div>
-    <div class="ig"><label class="inp-label">Amount</label>
-      <div class="inp-wrap"><span class="inp-pfx">₹</span><input class="inp" type="number" id="recAmt" placeholder="e.g. 3500"></div>
-    </div>
-    <div class="ig"><label class="inp-label">Name</label>
-      <input class="inp" type="text" id="recName" placeholder="e.g. Rent, Netflix, EMI">
-    </div>
-    <button class="btn btn-primary" onclick="addRecurring()">+ Add Recurring</button>
-    <div style="height:12px"></div>
-    <div id="recSetList"></div>
-  </div>
-  <div class="card" style="border-color:var(--red-light)">
-    <div class="card-title" style="color:var(--red)">⚠️ Account</div>
-    <button class="btn-danger-outline" onclick="doLogout()">🚪 Logout Karo</button>
-    <button class="btn-danger-outline" style="margin-top:8px" onclick="clearMonthData()">🗑️ Is Mahine Ka Data Clear</button>
-  </div>
-</div>
-
-</div><!-- end app -->
-</div><!-- end main-app -->
-
-<div class="toast" id="toast"></div>
+<div id="appRoot"></div>
 
 <script>
-// ══════════════════════════════════════════════════════
-// SUPABASE CONFIG
-// ══════════════════════════════════════════════════════
-const SB_URL = 'https://klvgssdoepzoeasmovmi.supabase.co';
-const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsdmdzc2RvZXB6b2Vhc21vdm1pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4MDc3ODgsImV4cCI6MjA5NjM4Mzc4OH0.ElQzDCn_-A10LJ01rhTr3S8XvEPuJAySjdMrTUfm99c';
-const H = { 'Content-Type':'application/json', 'apikey':SB_KEY, 'Authorization':`Bearer ${SB_KEY}` };
+    // ----------------------------- SUPABASE INIT -----------------------------
+    const SUPABASE_URL = "https://klvgssdoepzoeasmovmi.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imtsdmdzc2RvZXB6b2Vhc21vdm1pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4MDc3ODgsImV4cCI6MjA5NjM4Mzc4OH0.ElQzDCn_-A10LJ01rhTr3S8XvEPuJAySjdMrTUfm99c";
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// ══════════════════════════════════════════════════════
-// CONSTANTS
-// ══════════════════════════════════════════════════════
-const CATS = [
-  {id:'food',emoji:'🍛',name:'Khana',color:'#ef4444'},
-  {id:'travel',emoji:'🚌',name:'Travel',color:'#3b82f6'},
-  {id:'shopping',emoji:'🛍️',name:'Shopping',color:'#f59e0b'},
-  {id:'bills',emoji:'💡',name:'Bills',color:'#8b5cf6'},
-  {id:'health',emoji:'🏥',name:'Health',color:'#06b6d4'},
-  {id:'entertain',emoji:'🎬',name:'Masti',color:'#ec4899'},
-  {id:'grocery',emoji:'🛒',name:'Grocery',color:'#10b981'},
-  {id:'other',emoji:'📦',name:'Other',color:'#6b7280'},
-];
-const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-const MONTHS_FULL=['January','February','March','April','May','June','July','August','September','October','November','December'];
+    let currentUser = null;
+    let guestMode = false;
+    let appState = {
+        salary: 0,
+        savingsGoal: 0,
+        expenses: [],
+        budgets: {},      // { "Food": 5000, ... }
+        recurring: []     // [{ category, amount, frequency }]
+    };
 
-// ══════════════════════════════════════════════════════
-// STATE
-// ══════════════════════════════════════════════════════
-const nowD = new Date();
-let viewYear = nowD.getFullYear();
-let viewMonth = nowD.getMonth();
-let selectedCat = 'food';
-let selectedCalDay = null;
-let currentUser = null; // null = guest, object = logged in user
-let isGuest = false;
-let expenseCache = {};
-let settingsCache = null;
-
-// ══════════════════════════════════════════════════════
-// LOCAL STORAGE HELPERS (Guest)
-// ══════════════════════════════════════════════════════
-function lget(k){ try{ return JSON.parse(localStorage.getItem('pm_g_'+k)); }catch{ return null; } }
-function lset(k,v){ localStorage.setItem('pm_g_'+k, JSON.stringify(v)); }
-
-// ══════════════════════════════════════════════════════
-// SUPABASE HELPERS
-// ══════════════════════════════════════════════════════
-async function sbFetch(path, opts={}) {
-  try {
-    const r = await fetch(SB_URL+path, { headers:H, ...opts });
-    const txt = await r.text();
-    if (!r.ok) { console.error('SB Error:', txt); return null; }
-    return txt ? JSON.parse(txt) : true;
-  } catch(e) { console.error('SB fetch error:', e); return null; }
-}
-
-// Simple hash (not cryptographic — for demo)
-async function hashPassword(pass) {
-  const enc = new TextEncoder().encode(pass + 'paisapro_salt_2024');
-  const buf = await crypto.subtle.digest('SHA-256', enc);
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-
-// ══════════════════════════════════════════════════════
-// AUTH FUNCTIONS
-// ══════════════════════════════════════════════════════
-function switchAuthTab(tab) {
-  document.querySelectorAll('.auth-tab').forEach(b=>b.classList.remove('active'));
-  document.querySelectorAll('.auth-form').forEach(f=>f.classList.remove('show'));
-  document.querySelector(`.auth-tab[onclick*="${tab}"]`).classList.add('active');
-  document.getElementById(tab+'Form').classList.add('show');
-  hideAuthMsg();
-}
-
-function showAuthError(msg) {
-  const el = document.getElementById('authError');
-  el.textContent = msg; el.classList.add('show');
-  document.getElementById('authSuccess').classList.remove('show');
-}
-function showAuthSuccess(msg) {
-  const el = document.getElementById('authSuccess');
-  el.textContent = msg; el.classList.add('show');
-  document.getElementById('authError').classList.remove('show');
-}
-function hideAuthMsg() {
-  document.getElementById('authError').classList.remove('show');
-  document.getElementById('authSuccess').classList.remove('show');
-}
-
-async function doRegister() {
-  const name = document.getElementById('regName').value.trim();
-  const email = document.getElementById('regEmail').value.trim().toLowerCase();
-  const pass = document.getElementById('regPassword').value;
-  if (!name||!email||!pass) { showAuthError('Sab fields bharo!'); return; }
-  if (pass.length < 6) { showAuthError('Password kam se kam 6 characters ka hona chahiye!'); return; }
-  if (!email.includes('@')) { showAuthError('Valid email daalo!'); return; }
-
-  const btn = document.getElementById('registerBtn');
-  btn.textContent = 'Creating...'; btn.disabled = true;
-
-  // Check if email exists
-  const existing = await sbFetch(`/rest/v1/pm_users?email=eq.${encodeURIComponent(email)}&select=id`);
-  if (existing && existing.length > 0) {
-    showAuthError('Yeh email already registered hai! Login karo.');
-    btn.textContent='Account Banao →'; btn.disabled=false; return;
-  }
-
-  const hash = await hashPassword(pass);
-  const userId = 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2,8);
-
-  const result = await sbFetch('/rest/v1/pm_users', {
-    method:'POST',
-    headers:{...H,'Prefer':'return=minimal'},
-    body: JSON.stringify({id:userId, email, name, password_hash:hash})
-  });
-
-  if (result !== null) {
-    showAuthSuccess('✅ Account ban gaya! Ab login karo.');
-    document.getElementById('regName').value='';
-    document.getElementById('regEmail').value='';
-    document.getElementById('regPassword').value='';
-    setTimeout(()=>switchAuthTab('login'),1500);
-  } else {
-    showAuthError('Kuch problem aayi. Dobara try karo!');
-  }
-  btn.textContent='Account Banao →'; btn.disabled=false;
-}
-
-async function doLogin() {
-  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
-  const pass = document.getElementById('loginPassword').value;
-  if (!email||!pass) { showAuthError('Email aur password daalo!'); return; }
-
-  const btn = document.getElementById('loginBtn');
-  btn.textContent='Logging in...'; btn.disabled=true;
-
-  const hash = await hashPassword(pass);
-  const result = await sbFetch(`/rest/v1/pm_users?email=eq.${encodeURIComponent(email)}&password_hash=eq.${hash}&select=*`);
-
-  if (result && result.length > 0) {
-    const user = result[0];
-    localStorage.setItem('pm_session', JSON.stringify({id:user.id, email:user.email, name:user.name}));
-    await startApp(user, false);
-  } else {
-    showAuthError('Email ya password galat hai!');
-  }
-  btn.textContent='Login Karo →'; btn.disabled=false;
-}
-
-function continueAsGuest() {
-  localStorage.removeItem('pm_session');
-  startApp(null, true);
-}
-
-async function doLogout() {
-  if (!confirm('Logout karna chahte ho?')) return;
-  localStorage.removeItem('pm_session');
-  expenseCache = {};
-  settingsCache = null;
-  document.getElementById('mainApp').classList.remove('show');
-  document.getElementById('authScreen').classList.add('show');
-  showToast('👋 Logout ho gaye!');
-}
-
-// ══════════════════════════════════════════════════════
-// APP START
-// ══════════════════════════════════════════════════════
-async function startApp(user, guest) {
-  currentUser = user;
-  isGuest = guest;
-
-  document.getElementById('authScreen').classList.remove('show');
-  document.getElementById('mainApp').classList.add('show');
-
-  // Update user pill
-  if (isGuest) {
-    document.getElementById('userAvatar').textContent = '👤';
-    document.getElementById('userName').textContent = 'Guest';
-    document.getElementById('userPill').className = 'user-pill guest-pill';
-  } else {
-    const initials = (user.name||user.email).slice(0,2).toUpperCase();
-    document.getElementById('userAvatar').textContent = initials;
-    document.getElementById('userName').textContent = user.name || user.email.split('@')[0];
-    document.getElementById('userPill').className = 'user-pill';
-  }
-
-  buildCatGrid();
-  buildRecCatSelect();
-  document.getElementById('expDate').value = toDateStr(new Date());
-  updateMonthLabel();
-
-  await loadAllData();
-  hideLoader();
-  renderAll();
-}
-
-function showUserMenu() {
-  if (isGuest) {
-    if (confirm('Login karte ho? Aapka data cloud pe save hoga!')) {
-      document.getElementById('mainApp').classList.remove('show');
-      document.getElementById('authScreen').classList.add('show');
+    // Helper: load guest data from LocalStorage
+    function loadGuestData() {
+        const data = localStorage.getItem("paisa_guest_data");
+        if(data) {
+            try {
+                const parsed = JSON.parse(data);
+                appState.salary = parsed.salary || 0;
+                appState.savingsGoal = parsed.savingsGoal || 0;
+                appState.expenses = parsed.expenses || [];
+                appState.budgets = parsed.budgets || {};
+                appState.recurring = parsed.recurring || [];
+            } catch(e) {}
+        } else {
+            appState = { salary: 0, savingsGoal: 0, expenses: [], budgets: {}, recurring: [] };
+        }
+        renderApp();
     }
-  } else {
-    doLogout();
-  }
-}
 
-// ══════════════════════════════════════════════════════
-// DATA LAYER
-// ══════════════════════════════════════════════════════
-function getUserId() { return isGuest ? 'guest_local' : currentUser.id; }
-
-async function loadAllData() {
-  if (isGuest) {
-    settingsCache = lget('settings') || {salary:0, savings_goal:0, budgets:'{}', recurring:'[]'};
-  } else {
-    const sets = await sbFetch(`/rest/v1/pm_settings?user_uuid=eq.${getUserId()}&select=*`);
-    if (sets && sets.length>0) {
-      settingsCache = sets[0];
-    } else {
-      settingsCache = {salary:0, savings_goal:0, budgets:'{}', recurring:'[]'};
+    function saveGuestData() {
+        if(guestMode) {
+            localStorage.setItem("paisa_guest_data", JSON.stringify({
+                salary: appState.salary,
+                savingsGoal: appState.savingsGoal,
+                expenses: appState.expenses,
+                budgets: appState.budgets,
+                recurring: appState.recurring
+            }));
+        }
     }
-  }
-  document.getElementById('setSalary').value = settingsCache.salary||'';
-  document.getElementById('setSavingsGoal').value = settingsCache.savings_goal||'';
-  await loadMonthExpenses(viewYear, viewMonth);
-  await applyRecurring();
-}
 
-async function loadMonthExpenses(yr, mo) {
-  const key=`${yr}-${mo}`;
-  if (isGuest) {
-    expenseCache[key] = lget(`exp_${yr}_${mo}`) || [];
-    return expenseCache[key];
-  }
-  const data = await sbFetch(`/rest/v1/expenses?user_uuid=eq.${getUserId()}&year=eq.${yr}&month=eq.${mo}&order=id.desc&select=*`);
-  expenseCache[key] = data || [];
-  return expenseCache[key];
-}
-
-// ══════════════════════════════════════════════════════
-// SETTINGS
-// ══════════════════════════════════════════════════════
-function getSettings(){ return settingsCache||{salary:0,savings_goal:0,budgets:'{}',recurring:'[]'}; }
-function getBudgets(){ try{ return JSON.parse(getSettings().budgets||'{}'); }catch{ return {}; } }
-function getRecurring(){ try{ return JSON.parse(getSettings().recurring||'[]'); }catch{ return []; } }
-
-async function saveSettings(partial) {
-  const current = getSettings();
-  const updated = {...current, ...partial};
-  settingsCache = updated;
-  if (isGuest) {
-    lset('settings', updated);
-  } else {
-    await sbFetch('/rest/v1/pm_settings', {
-      method:'POST',
-      headers:{...H,'Prefer':'resolution=merge-duplicates,return=minimal'},
-      body: JSON.stringify({user_uuid:getUserId(), salary:updated.salary||0, savings_goal:updated.savings_goal||0, budgets:updated.budgets||'{}', recurring:updated.recurring||'[]'})
-    });
-  }
-}
-
-async function saveGlobalSettings() {
-  const salary=parseFloat(document.getElementById('setSalary').value)||0;
-  const savings_goal=parseFloat(document.getElementById('setSavingsGoal').value)||0;
-  await saveSettings({salary,savings_goal});
-  renderAll();
-  showToast('✅ Settings save ho gayi!');
-}
-
-function buildBudgetLimitsForm() {
-  const budgets=getBudgets();
-  document.getElementById('budgetLimitsForm').innerHTML=CATS.map(c=>`
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
-      <span style="font-size:18px;width:26px">${c.emoji}</span>
-      <span style="flex:1;font-size:13px;font-weight:600">${c.name}</span>
-      <div class="inp-wrap" style="width:110px"><span class="inp-pfx">₹</span>
-        <input class="inp" type="number" id="bgt_${c.id}" placeholder="No limit" style="font-size:12px;padding:8px 8px 8px 24px" value="${budgets[c.id]||''}">
-      </div>
-    </div>`).join('');
-}
-
-async function saveBudgetLimits() {
-  const b={};
-  CATS.forEach(c=>{ const v=parseFloat(document.getElementById(`bgt_${c.id}`).value); if(v>0) b[c.id]=v; });
-  await saveSettings({budgets:JSON.stringify(b)});
-  renderAll();
-  showToast('🚦 Budget limits save ho gayi!');
-}
-
-// ══════════════════════════════════════════════════════
-// RECURRING
-// ══════════════════════════════════════════════════════
-async function applyRecurring() {
-  const recs=getRecurring();
-  if (!recs.length) return;
-  const flagKey=`rec_${viewYear}_${viewMonth}`;
-  if (isGuest && lget(flagKey)) return;
-  if (!isGuest) {
-    const flag = await sbFetch(`/rest/v1/expenses?user_uuid=eq.${getUserId()}&year=eq.${viewYear}&month=eq.${viewMonth}&note=like.*Auto*&select=id`);
-    if (flag && flag.length>0) return;
-  }
-  const key=`${viewYear}-${viewMonth}`;
-  if (!expenseCache[key]) expenseCache[key]=[];
-  for (const r of recs) {
-    const cat=CATS.find(c=>c.id===r.cat)||CATS[7];
-    const dateStr=`${viewYear}-${String(viewMonth+1).padStart(2,'0')}-01`;
-    const exp={id:Date.now()+Math.floor(Math.random()*1000), cat:r.cat, emoji:cat.emoji, cat_name:cat.name, amt:r.amt, note:r.name+' (Auto)', date:dateStr, time:'00:00', year:viewYear, month:viewMonth};
-    if (!isGuest) {
-      await sbFetch('/rest/v1/expenses',{method:'POST',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify({...exp,user_uuid:getUserId()})});
+    // ----------------------------- SUPABASE FETCH -----------------------------
+    async function fetchUserData(userId) {
+        // 1. fetch settings (salary + goal + budgets + recurring)
+        const { data: settings } = await supabase.from("pm_settings").select("*").eq("user_uuid", userId).single();
+        if(settings) {
+            appState.salary = settings.salary || 0;
+            appState.savingsGoal = settings.savings_goal || 0;
+            appState.budgets = settings.budgets || {};
+            appState.recurring = settings.recurring || [];
+        } else {
+            // create default
+            await supabase.from("pm_settings").insert([{ user_uuid: userId, salary: 0, savings_goal: 0, budgets: {}, recurring: [] }]);
+            appState.salary = 0; appState.savingsGoal = 0; appState.budgets = {}; appState.recurring = [];
+        }
+        // 2. fetch expenses
+        const { data: expensesData } = await supabase.from("expenses").select("*").eq("user_uuid", userId).order("created_at", { ascending: false });
+        appState.expenses = expensesData || [];
+        renderApp();
     }
-    expenseCache[key].unshift(exp);
-  }
-  if (isGuest) { lset(`exp_${viewYear}_${viewMonth}`, expenseCache[key]); lset(flagKey, true); }
-}
 
-async function addRecurring() {
-  const cat=document.getElementById('recCat').value;
-  const amt=parseFloat(document.getElementById('recAmt').value);
-  const name=document.getElementById('recName').value.trim();
-  if (!amt||!name){showToast('Sab fields bharo!');return;}
-  const recs=getRecurring();
-  recs.push({id:Date.now(),cat,amt,name});
-  await saveSettings({recurring:JSON.stringify(recs)});
-  document.getElementById('recAmt').value='';
-  document.getElementById('recName').value='';
-  renderAll();
-  showToast('🔁 Recurring add ho gaya!');
-}
-
-async function deleteRecurring(id) {
-  const recs=getRecurring().filter(r=>r.id!==id);
-  await saveSettings({recurring:JSON.stringify(recs)});
-  renderAll();
-}
-
-// ══════════════════════════════════════════════════════
-// ADD / DELETE EXPENSE
-// ══════════════════════════════════════════════════════
-async function addExpense() {
-  const amt=parseFloat(document.getElementById('expAmt').value);
-  const note=document.getElementById('expNote').value.trim();
-  const dateStr=document.getElementById('expDate').value;
-  if (!amt||amt<=0){showToast('Amount daalo! 😅');return;}
-  if (!dateStr){showToast('Date select karo!');return;}
-  const d=parseDate(dateStr);
-  const yr=d.getFullYear(), mo=d.getMonth();
-  const cat=CATS.find(c=>c.id===selectedCat)||CATS[7];
-  const exp={id:Date.now(), cat:selectedCat, emoji:cat.emoji, cat_name:cat.name, amt, note:note||cat.name, date:dateStr, time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'}), year:yr, month:mo};
-
-  const key=`${yr}-${mo}`;
-  if (!expenseCache[key]) expenseCache[key]=[];
-  expenseCache[key].unshift(exp);
-
-  if (isGuest) {
-    lset(`exp_${yr}_${mo}`, expenseCache[key]);
-  } else {
-    const btn=document.getElementById('addBtn');
-    btn.textContent='Saving...'; btn.disabled=true;
-    const ok=await sbFetch('/rest/v1/expenses',{method:'POST',headers:{...H,'Prefer':'return=minimal'},body:JSON.stringify({...exp,user_uuid:getUserId()})});
-    btn.textContent='+ Expense Daalo'; btn.disabled=false;
-    if (!ok) { showToast('Cloud save fail! Dobara try karo.','err'); return; }
-  }
-
-  document.getElementById('expAmt').value='';
-  document.getElementById('expNote').value='';
-  if (yr===viewYear&&mo===viewMonth) renderAll();
-  showToast(`${cat.emoji} ₹${fmt(amt)} add ho gaya!`);
-}
-
-async function deleteExpense(dateStr, id) {
-  const d=parseDate(dateStr);
-  const yr=d.getFullYear(), mo=d.getMonth();
-  const key=`${yr}-${mo}`;
-  if (expenseCache[key]) expenseCache[key]=expenseCache[key].filter(e=>e.id!==id);
-  if (isGuest) {
-    lset(`exp_${yr}_${mo}`, expenseCache[key]||[]);
-  } else {
-    await sbFetch(`/rest/v1/expenses?id=eq.${id}&user_uuid=eq.${getUserId()}`,{method:'DELETE',headers:H});
-  }
-  if (yr===viewYear&&mo===viewMonth) renderAll();
-  showToast('Expense delete ho gaya');
-}
-
-// ══════════════════════════════════════════════════════
-// MONTH NAV
-// ══════════════════════════════════════════════════════
-async function changeMonth(delta) {
-  viewMonth+=delta;
-  if(viewMonth>11){viewMonth=0;viewYear++;}
-  if(viewMonth<0){viewMonth=11;viewYear--;}
-  selectedCalDay=null;
-  updateMonthLabel();
-  await loadMonthExpenses(viewYear,viewMonth);
-  await applyRecurring();
-  renderAll();
-}
-function updateMonthLabel(){document.getElementById('monthLabel').textContent=MONTHS_FULL[viewMonth]+' '+viewYear;}
-
-// ══════════════════════════════════════════════════════
-// RENDER ALL
-// ══════════════════════════════════════════════════════
-function renderAll() {
-  const settings=getSettings();
-  const key=`${viewYear}-${viewMonth}`;
-  const exps=expenseCache[key]||[];
-  const total=exps.reduce((s,e)=>s+Number(e.amt),0);
-  const salary=Number(settings.salary)||0;
-  const balance=salary-total;
-  const saved=Math.max(balance,0);
-  const pct=salary>0?Math.min((total/salary)*100,100):0;
-
-  // HERO
-  const hb=document.getElementById('heroBalance');
-  hb.textContent=fmt(balance); hb.className='hero-amt'+(balance<0?' danger':'');
-  document.getElementById('hSalary').textContent=fmt(salary);
-  document.getElementById('hExpense').textContent=fmt(total);
-  document.getElementById('hSaved').textContent=fmt(saved);
-  document.getElementById('progPct').textContent=pct.toFixed(1)+'%';
-  const pf=document.getElementById('progFill');
-  pf.style.width=pct+'%'; pf.className='prog-fill'+(pct>90?' danger':pct>70?' warn':'');
-
-  // SAVINGS
-  const goal=Number(settings.savings_goal)||0;
-  document.getElementById('savedAmt').textContent=fmt(saved);
-  if(goal>0){
-    const sp=Math.min((saved/goal)*100,100);
-    document.getElementById('savedSub').textContent=`Goal: ${fmt(goal)} — ${sp>=100?'🎉 Goal achieve!':sp.toFixed(0)+'% poora hua'}`;
-    document.getElementById('savedBadge').textContent=sp.toFixed(0)+'%';
-    document.getElementById('sbarFill').style.width=sp+'%';
-    document.getElementById('sbarGoal').textContent=fmt(goal)+' Goal';
-  } else {
-    document.getElementById('savedSub').textContent='Setup mein goal set karo';
-    document.getElementById('savedBadge').textContent='—';
-    document.getElementById('sbarFill').style.width='0';
-  }
-
-  // GUEST BANNER
-  const gb=document.getElementById('guestBanner');
-  if(isGuest){
-    gb.innerHTML=`<div class="guest-banner"><div class="guest-banner-icon">⚠️</div><div class="guest-banner-text"><div class="guest-banner-title">Guest Mode — Data Sirf Phone Pe</div><div class="guest-banner-sub">Login karo — data cloud pe safe rahega</div></div><button class="guest-banner-btn" onclick="doLogout()">Login</button></div>`;
-  } else { gb.innerHTML=''; }
-
-  renderCatBreakdown(exps,total);
-  renderExpList(exps);
-  renderBudgetAlerts(exps);
-  renderCalendar(exps);
-  renderRecurringCard();
-  renderRecSetList();
-  buildBudgetLimitsForm();
-  renderHistory();
-}
-
-function renderCatBreakdown(exps,total){
-  const budgets=getBudgets(),catTotals={};
-  exps.forEach(e=>{catTotals[e.cat]=(catTotals[e.cat]||0)+Number(e.amt);});
-  const bd=document.getElementById('catBreakdown');
-  const active=CATS.filter(c=>catTotals[c.id]);
-  if(!active.length){bd.innerHTML='<div class="empty"><div class="ei">📭</div>Is mahine koi expense nahi</div>';return;}
-  const maxVal=Math.max(...active.map(c=>catTotals[c.id]||0),1);
-  bd.innerHTML=active.sort((a,b)=>(catTotals[b.id]||0)-(catTotals[a.id]||0)).map(c=>{
-    const amt=catTotals[c.id]||0,bgt=budgets[c.id]||0;
-    let tag='';
-    if(bgt>0){const bp=(amt/bgt)*100;tag=bp>=100?`<span class="badge badge-red">⚠️ Over!</span>`:bp>=80?`<span class="badge badge-yellow">⚡${bp.toFixed(0)}%</span>`:`<span class="badge badge-green">✓${bp.toFixed(0)}%</span>`;}
-    return `<div class="cat-bar-row"><div class="cat-bar-emoji">${c.emoji}</div><div class="cat-bar-body">
-      <div class="cat-bar-head"><span>${c.name} ${tag}</span><span style="font-weight:700">${fmt(amt)}</span></div>
-      <div class="cat-track"><div class="cat-fill" style="width:${(amt/maxVal)*100}%;background:${c.color}"></div></div>
-      ${bgt>0?`<div style="font-size:10px;color:var(--muted);margin-top:2px">Budget: ${fmt(bgt)}</div>`:''}
-    </div></div>`;
-  }).join('');
-}
-
-function renderExpList(exps){
-  const el=document.getElementById('expList');
-  if(!exps.length){el.innerHTML='<div class="empty"><div class="ei">🧾</div>Koi entry nahi</div>';return;}
-  el.innerHTML=`<div class="exp-list">${exps.map(e=>`
-    <div class="exp-item">
-      <div class="exp-emoji">${e.emoji}</div>
-      <div class="exp-info"><div class="exp-note">${e.note}</div><div class="exp-meta">${e.cat_name||''} · ${e.date} ${e.time}</div></div>
-      <div class="exp-amt">₹${Number(e.amt).toLocaleString('en-IN')}</div>
-      <button class="exp-del" onclick="deleteExpense('${e.date}',${e.id})">✕</button>
-    </div>`).join('')}</div>`;
-}
-
-function renderBudgetAlerts(exps){
-  const budgets=getBudgets(),catTotals={};
-  exps.forEach(e=>{catTotals[e.cat]=(catTotals[e.cat]||0)+Number(e.amt);});
-  const alerts=CATS.filter(c=>{const b=budgets[c.id]||0,a=catTotals[c.id]||0;return b>0&&a>=b*0.8;}).map(c=>({c,amt:catTotals[c.id]||0,bgt:budgets[c.id],pct:(catTotals[c.id]||0)/budgets[c.id]*100}));
-  const card=document.getElementById('budgetAlertCard');
-  if(!alerts.length){card.style.display='none';return;}
-  card.style.display='block';
-  document.getElementById('budgetAlerts').innerHTML=alerts.map(a=>`
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border2)">
-      <span style="font-size:18px">${a.c.emoji}</span>
-      <div style="flex:1"><div style="font-size:13px;font-weight:600">${a.c.name}: ${fmt(a.amt)} / ${fmt(a.bgt)}</div>
-      <div style="font-size:11px;color:${a.pct>=100?'var(--red)':'var(--yellow)'}">${a.pct>=100?'⚠️ Budget exceed ho gaya!':'⚡ '+a.pct.toFixed(0)+'% use ho gaya'}</div></div>
-    </div>`).join('');
-}
-
-function renderCalendar(exps){
-  document.getElementById('calTitle').textContent=`📅 ${MONTHS_FULL[viewMonth]} ${viewYear}`;
-  const DAYS=['Su','Mo','Tu','We','Th','Fr','Sa'];
-  document.getElementById('calDaysHeader').innerHTML=DAYS.map(d=>`<div class="cal-day-hd">${d}</div>`).join('');
-  const dayTotals={};
-  exps.forEach(e=>{const day=parseInt(e.date.split('-')[2]);dayTotals[day]=(dayTotals[day]||0)+Number(e.amt);});
-  const firstDay=new Date(viewYear,viewMonth,1).getDay();
-  const daysInMonth=new Date(viewYear,viewMonth+1,0).getDate();
-  const todayDate=nowD.getFullYear()===viewYear&&nowD.getMonth()===viewMonth?nowD.getDate():-1;
-  let html='';
-  for(let i=0;i<firstDay;i++) html+=`<div class="cal-day empty"></div>`;
-  for(let d=1;d<=daysInMonth;d++){
-    const hasExp=dayTotals[d]>0,isToday=d===todayDate,isSel=d===selectedCalDay;
-    html+=`<div class="cal-day${hasExp?' has-exp':''}${isToday?' today':''}${isSel?' selected':''}" onclick="selectDay(${d})">${d}${hasExp?'<div class="cal-dot"></div>':''}</div>`;
-  }
-  document.getElementById('calGrid').innerHTML=html;
-  renderDayExpenses(exps);
-}
-
-function selectDay(d){selectedCalDay=selectedCalDay===d?null:d;renderAll();}
-
-function renderDayExpenses(exps){
-  const dt=document.getElementById('dayCardTitle'),dl=document.getElementById('dayExpList');
-  if(!selectedCalDay){dt.textContent='Koi din select nahi';dl.innerHTML='<div class="empty"><div class="ei">📅</div>Calendar mein din tap karo</div>';return;}
-  const dateStr=`${viewYear}-${String(viewMonth+1).padStart(2,'0')}-${String(selectedCalDay).padStart(2,'0')}`;
-  const dayExps=exps.filter(e=>e.date===dateStr);
-  const dayTotal=dayExps.reduce((s,e)=>s+Number(e.amt),0);
-  dt.textContent=`${selectedCalDay} ${MONTHS_FULL[viewMonth]} — ${fmt(dayTotal)}`;
-  if(!dayExps.length){dl.innerHTML='<div class="empty"><div class="ei">✨</div>Is din koi expense nahi</div>';return;}
-  dl.innerHTML=`<div class="exp-list">${dayExps.map(e=>`
-    <div class="exp-item">
-      <div class="exp-emoji">${e.emoji}</div>
-      <div class="exp-info"><div class="exp-note">${e.note}</div><div class="exp-meta">${e.cat_name||''} · ${e.time}</div></div>
-      <div class="exp-amt">₹${Number(e.amt).toLocaleString('en-IN')}</div>
-      <button class="exp-del" onclick="deleteExpense('${e.date}',${e.id})">✕</button>
-    </div>`).join('')}</div>`;
-}
-
-async function renderHistory(){
-  const settings=getSettings(),salary=Number(settings.salary)||0;
-  const data=[];
-  for(let y=viewYear-1;y<=viewYear;y++){
-    for(let m=0;m<12;m++){
-      const key=`${y}-${m}`;
-      if(!expenseCache[key]) await loadMonthExpenses(y,m);
-      const exps=expenseCache[key]||[];
-      if(exps.length>0||(y===viewYear&&m===nowD.getMonth())){
-        const total=exps.reduce((s,e)=>s+Number(e.amt),0);
-        data.push({yr:y,mo:m,total,saved:Math.max(salary-total,0),label:MONTHS[m]+' '+y});
-      }
+    async function syncExpenseToSupabase(expenseObj) {
+        if(!currentUser || guestMode) return;
+        await supabase.from("expenses").insert([{ ...expenseObj, user_uuid: currentUser.id }]);
     }
-  }
-  const chart=document.getElementById('monthChart'),list=document.getElementById('monthHistList');
-  if(!data.length){chart.innerHTML='<div class="empty" style="width:100%">Data nahi hai</div>';list.innerHTML='<div class="empty"><div class="ei">📭</div>Koi history nahi</div>';return;}
-  const maxT=Math.max(...data.map(d=>d.total),1);
-  chart.innerHTML=data.map(d=>`
-    <div class="bar-col" onclick="jumpToMonth(${d.yr},${d.mo})">
-      <div style="font-size:8px;color:var(--muted);font-weight:700">${fmt(d.total)}</div>
-      <div class="bar-rect" style="height:${Math.max((d.total/maxT)*85,4)}px;background:${d.yr===viewYear&&d.mo===viewMonth?'var(--green)':'var(--green-mid)'}"></div>
-      <div class="bar-lbl">${MONTHS[d.mo]}</div>
-    </div>`).join('');
-  list.innerHTML=data.slice().reverse().map(d=>`
-    <div class="month-hist-item" onclick="jumpToMonth(${d.yr},${d.mo})">
-      <div style="min-width:80px"><div style="font-weight:700;font-size:13px">${d.label}</div><div style="font-size:11px;color:var(--green);font-weight:600">💰 ${fmt(d.saved)}</div></div>
-      <div class="mhi-bar-wrap"><div class="mhi-bar-track"><div class="mhi-bar-fill" style="width:${(d.total/maxT)*100}%"></div></div></div>
-      <div class="mhi-amt">${fmt(d.total)}</div>
-    </div>`).join('');
-}
 
-async function jumpToMonth(yr,mo){
-  viewYear=yr;viewMonth=mo;updateMonthLabel();
-  await loadMonthExpenses(yr,mo);renderAll();
-  switchTab('home',document.querySelector('.tab-btn'));
-}
+    async function deleteExpenseFromSupabase(expenseId) {
+        if(!currentUser || guestMode) return;
+        await supabase.from("expenses").delete().eq("id", expenseId).eq("user_uuid", currentUser.id);
+    }
 
-function renderRecurringCard(){
-  const recs=getRecurring(),card=document.getElementById('recCard'),list=document.getElementById('recHomeList');
-  if(!recs.length){card.style.display='none';return;}
-  card.style.display='block';
-  list.innerHTML=recs.map(r=>{const cat=CATS.find(c=>c.id===r.cat)||CATS[7];return `<div class="rec-item"><span style="font-size:18px">${cat.emoji}</span><div style="flex:1"><div style="font-size:13px;font-weight:600">${r.name}</div><div style="font-size:11px;color:var(--muted)">${cat.name} · Har mahine</div></div><div style="font-weight:700;color:var(--green)">${fmt(r.amt)}</div></div>`;}).join('');
-}
+    async function updateSettingsSupabase() {
+        if(!currentUser || guestMode) return;
+        await supabase.from("pm_settings").upsert({ 
+            user_uuid: currentUser.id, 
+            salary: appState.salary, 
+            savings_goal: appState.savingsGoal, 
+            budgets: appState.budgets, 
+            recurring: appState.recurring 
+        });
+    }
 
-function renderRecSetList(){
-  const recs=getRecurring(),el=document.getElementById('recSetList');
-  if(!recs.length){el.innerHTML='<div class="empty" style="padding:12px 0"><div class="ei">🔁</div>Koi recurring nahi</div>';return;}
-  el.innerHTML=recs.map(r=>{const cat=CATS.find(c=>c.id===r.cat)||CATS[7];return `<div class="rec-item"><span style="font-size:18px">${cat.emoji}</span><div style="flex:1"><div style="font-size:13px;font-weight:600">${r.name}</div><div style="font-size:11px;color:var(--muted)">${fmt(r.amt)} · Auto monthly</div></div><button style="background:var(--red-light);color:var(--red);border:none;border-radius:8px;padding:6px 10px;font-size:12px;font-weight:700;cursor:pointer" onclick="deleteRecurring(${r.id})">✕</button></div>`;}).join('');
-}
+    // ----------------------------- CORE BUSINESS LOGIC -----------------------------
+    function getTotalExpense() {
+        const currMonth = new Date().getMonth();
+        const currYear = new Date().getFullYear();
+        return appState.expenses.filter(exp => {
+            const expDate = new Date(exp.date);
+            return expDate.getMonth() === currMonth && expDate.getFullYear() === currYear;
+        }).reduce((sum, e) => sum + Number(e.amt), 0);
+    }
 
-// ══════════════════════════════════════════════════════
-// EXPORT
-// ══════════════════════════════════════════════════════
-function exportCSV(){
-  const exps=expenseCache[`${viewYear}-${viewMonth}`]||[];
-  if(!exps.length){showToast('Koi data nahi!');return;}
-  const settings=getSettings();
-  const rows=[['Date','Time','Category','Note','Amount (INR)']];
-  exps.forEach(e=>rows.push([e.date,e.time,e.cat_name,e.note,e.amt]));
-  rows.push([],[`Total`,'',' ','',exps.reduce((s,e)=>s+Number(e.amt),0)]);
-  const csv=rows.map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
-  a.download=`PaisaPro_${MONTHS_FULL[viewMonth]}_${viewYear}.csv`;a.click();
-  showToast('📄 CSV download ho raha hai!');
-}
+    function getMoneyLeft() { return appState.salary - getTotalExpense(); }
+    function getSavingsProgress() { if(appState.savingsGoal <=0) return 0; return Math.min(100, (getMoneyLeft() / appState.savingsGoal) * 100); }
+    function getExpensePercent() { if(appState.salary <=0) return 0; return Math.min(100, (getTotalExpense() / appState.salary) * 100); }
 
-function exportJSON(){
-  const blob=new Blob([JSON.stringify({user:isGuest?'guest':currentUser?.email,settings:getSettings(),expenses:expenseCache},null,2)],{type:'application/json'});
-  const a=document.createElement('a');a.href=URL.createObjectURL(blob);
-  a.download=`PaisaPro_Backup_${toDateStr(new Date())}.json`;a.click();
-  showToast('💾 JSON backup ready!');
-}
+    function addExpense(expense) {
+        const newExp = { ...expense, id: Date.now() + Math.random() };
+        appState.expenses.unshift(newExp);
+        if(!guestMode && currentUser) syncExpenseToSupabase(newExp);
+        else saveGuestData();
+        renderApp();
+        animateNumber();
+    }
+    function deleteExpense(id) {
+        appState.expenses = appState.expenses.filter(e => e.id != id);
+        if(!guestMode && currentUser) deleteExpenseFromSupabase(id);
+        else saveGuestData();
+        renderApp();
+    }
+    function setSalary(value) { appState.salary = Number(value); if(!guestMode && currentUser) updateSettingsSupabase(); else saveGuestData(); renderApp(); animateNumber(); }
+    function setGoal(value) { appState.savingsGoal = Number(value); if(!guestMode && currentUser) updateSettingsSupabase(); else saveGuestData(); renderApp(); animateNumber(); }
+    function setBudget(cat, amount) { appState.budgets[cat] = Number(amount); if(!guestMode && currentUser) updateSettingsSupabase(); else saveGuestData(); renderApp(); }
 
-// ══════════════════════════════════════════════════════
-// UI HELPERS
-// ══════════════════════════════════════════════════════
-function buildCatGrid(){
-  document.getElementById('catGrid').innerHTML=CATS.map(c=>`
-    <button class="cat-btn${c.id===selectedCat?' active':''}" onclick="selectCat('${c.id}')">
-      <span class="cb-emoji">${c.emoji}</span><span class="cb-name">${c.name}</span>
-    </button>`).join('');
-}
-function selectCat(id){selectedCat=id;buildCatGrid();}
-function buildRecCatSelect(){document.getElementById('recCat').innerHTML=CATS.map(c=>`<option value="${c.id}">${c.emoji} ${c.name}</option>`).join('');}
+    // ----------------------------- UI RENDER (WHITE/GREEN + ENGLISH) -----------------------------
+    function animateNumber() { /* simple class to update numbers visually  -  handled by re-render */ }
+    const categories = ["Food", "Travel", "Shopping", "Bills", "Health", "Entertainment", "Grocery", "Other"];
+    const catIcons = { Food:"fa-utensils", Travel:"fa-plane", Shopping:"fa-bag-shopping", Bills:"fa-file-invoice", Health:"fa-heart-pulse", Entertainment:"fa-film", Grocery:"fa-cart-shopping", Other:"fa-tag" };
 
-function switchTab(id,btn){
-  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('view-'+id).classList.add('active');
-  document.querySelectorAll('.tab-btn').forEach(b=>{if(b.getAttribute('onclick')&&b.getAttribute('onclick').includes("'"+id+"'")) b.classList.add('active');});
-}
+    function renderApp() {
+        const root = document.getElementById("appRoot");
+        if(!root) return;
+        const totalExp = getTotalExpense();
+        const leftMoney = getMoneyLeft();
+        const expensePercent = getExpensePercent();
+        const savingsPercent = getSavingsProgress();
 
-async function clearMonthData(){
-  if(!confirm(`${MONTHS_FULL[viewMonth]} ${viewYear} ka data delete hoga?`)) return;
-  const key=`${viewYear}-${viewMonth}`;
-  if(isGuest){lset(`exp_${viewYear}_${viewMonth}`,[]);}
-  else{await sbFetch(`/rest/v1/expenses?user_uuid=eq.${getUserId()}&year=eq.${viewYear}&month=eq.${viewMonth}`,{method:'DELETE',headers:H});}
-  expenseCache[key]=[];
-  renderAll();showToast('🗑️ Data clear ho gaya');
-}
+        let categoryBreakdown = {};
+        appState.expenses.forEach(exp => { if(exp.cat_name) categoryBreakdown[exp.cat_name] = (categoryBreakdown[exp.cat_name]||0) + Number(exp.amt); });
+        
+        const recentHtml = appState.expenses.slice(0, 8).map(exp => `
+            <div class="expense-item flex-between" style="padding:12px 0; border-bottom:1px solid #E5E7EB;">
+                <div><i class="fas ${catIcons[exp.cat_name] || 'fa-receipt'} text-green"></i> <strong>${exp.cat_name}</strong><br><small>${exp.date}</small></div>
+                <div><span style="font-weight:700;">₹${Number(exp.amt).toLocaleString('en-IN')}</span> <i class="fas fa-trash-alt" style="color:#EF4444; margin-left:12px; cursor:pointer;" onclick="window.deleteExpense(${exp.id})"></i></div>
+            </div>
+        `).join("");
 
-function fmt(n){const s=n<0?'-':'';return s+'₹'+Math.abs(Math.round(n)).toLocaleString('en-IN');}
-function toDateStr(d){return d.toISOString().split('T')[0];}
-function parseDate(s){const p=s.split('-');return new Date(+p[0],+p[1]-1,+p[2]);}
-function showToast(msg,type=''){
-  const t=document.getElementById('toast');
-  t.textContent=msg;t.className='toast show'+(type==='err'?' err':type==='warn'?' warn':'');
-  setTimeout(()=>t.classList.remove('show'),2500);
-}
-function hideLoader(){document.getElementById('loader').classList.add('hidden');}
+        root.innerHTML = `
+            <div class="container">
+                <!-- Header -->
+                <div class="flex-between" style="margin-bottom: 16px;">
+                    <h2 style="color:var(--primary-dark);">💰 Paisa Manager Pro</h2>
+                    ${guestMode ? '<span class="category-badge"><i class="fas fa-user-friends"></i> Guest Mode</span>' : (currentUser ? '<span class="category-badge"><i class="fas fa-cloud-upload-alt"></i> Cloud Sync</span>' : '')}
+                </div>
+                <!-- Dashboard Grid -->
+                <div class="stats-grid">
+                    <div class="stat-card">💰 Money Left<br><span class="stat-amount">₹${leftMoney.toLocaleString('en-IN')}</span></div>
+                    <div class="stat-card">💼 Salary<br><span class="stat-amount">₹${appState.salary.toLocaleString('en-IN')}</span></div>
+                    <div class="stat-card">💸 Expense<br><span class="stat-amount">₹${totalExp.toLocaleString('en-IN')}</span></div>
+                    <div class="stat-card">🏦 Savings<br><span class="stat-amount">₹${leftMoney >0 ? leftMoney.toLocaleString('en-IN'):0}</span></div>
+                </div>
+                <!-- Progress Sections -->
+                <div class="card">
+                    <div class="flex-between"><span>Expense vs Salary</span><strong>${expensePercent.toFixed(1)}%</strong></div>
+                    <div class="progress-bar-bg"><div class="progress-fill" style="width: ${expensePercent}%;"></div></div>
+                    <div class="flex-between" style="margin-top:12px;"><span>🎯 Savings Goal Progress</span><strong>${savingsPercent.toFixed(1)}%</strong></div>
+                    <div class="progress-bar-bg"><div class="progress-fill" style="width: ${savingsPercent}%;"></div></div>
+                    <button class="btn-outline" style="margin-top:12px;" onclick="openSetupModal()"><i class="fas fa-cog"></i> Monthly Setup</button>
+                </div>
 
-// ══════════════════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════════════════
-async function init(){
-  // Check saved session
-  const session = localStorage.getItem('pm_session');
-  if(session){
-    try{
-      const user=JSON.parse(session);
-      // Verify user still exists
-      const check=await sbFetch(`/rest/v1/pm_users?id=eq.${user.id}&select=id,email,name`);
-      if(check&&check.length>0){
-        await startApp(check[0],false);
-        return;
-      }
-    }catch(e){}
-    localStorage.removeItem('pm_session');
-  }
-  // Show auth screen
-  hideLoader();
-  document.getElementById('authScreen').classList.add('show');
-}
+                <!-- Category Breakdown -->
+                <div class="card"><h3>📊 Category Breakdown</h3>${categories.map(cat => `<div class="flex-between"><span><i class="fas ${catIcons[cat]}"></i> ${cat}</span><span>₹${(categoryBreakdown[cat] || 0).toLocaleString('en-IN')}</span></div>`).join("")}</div>
 
-// PWA Service Worker
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').catch(()=>{});
-}
+                <!-- Add Expense -->
+                <div class="card">
+                    <h3>➕ Add Expense</h3>
+                    <input type="number" id="expenseAmount" placeholder="₹ Amount">
+                    <select id="expenseCategory">${categories.map(c => `<option value="${c}">${c}</option>`).join("")}</select>
+                    <input type="date" id="expenseDate" value="${new Date().toISOString().slice(0,10)}">
+                    <button class="btn-primary ripple" onclick="addNewExpense()">Add Expense <i class="fas fa-plus-circle"></i></button>
+                </div>
 
-init();
+                <!-- Recent Entries -->
+                <div class="card"><h3>🧾 Recent Entries</h3>${recentHtml || "<p class='text-gray'>No entries yet</p>"}</div>
+
+                <!-- Budget Limits -->
+                <div class="card"><h3>🚦 Category Budget Limits</h3>${categories.map(cat => `<div class="flex-between"><span>${cat}</span><input type="number" id="budget-${cat}" placeholder="₹ Limit" style="width:120px; margin:0;" value="${appState.budgets[cat] || ''}"><button class="btn-outline" style="width:auto; padding:6px 14px;" onclick="setBudget('${cat}', document.getElementById('budget-${cat}').value)">Set</button></div>`).join("")}</div>
+
+                <!-- Recurring & Export -->
+                <div class="card">
+                    <h3>🔁 Recurring Expenses</h3>
+                    <div id="recurringList"></div>
+                    <div class="flex-between"><input type="number" id="recurAmt" placeholder="₹ Amount"><select id="recurCat">${categories.map(c=>`<option>${c}</option>`)}</select><button class="btn-primary" style="width:auto;" onclick="addRecurring()">Add</button></div>
+                    <hr><button class="btn-outline" onclick="exportCSV()"><i class="fas fa-download"></i> Export CSV</button>
+                </div>
+                <button class="btn-outline" onclick="logout()" style="margin-bottom:30px;"><i class="fas fa-sign-out-alt"></i> Logout / Reset</button>
+            </div>
+        `;
+        // attach recurring display
+        const recDiv = document.getElementById("recurringList");
+        if(recDiv) recDiv.innerHTML = appState.recurring.map(r => `<div>${r.category} - ₹${r.amount} / month</div>`).join("");
+    }
+
+    window.addNewExpense = function() {
+        let amt = document.getElementById("expenseAmount").value;
+        let cat = document.getElementById("expenseCategory").value;
+        let date = document.getElementById("expenseDate").value;
+        if(!amt || amt<=0) return alert("Enter valid amount");
+        addExpense({ amt: Number(amt), cat_name: cat, date: date, cat: cat, year: new Date(date).getFullYear(), month: new Date(date).getMonth()+1 });
+        document.getElementById("expenseAmount").value = "";
+    };
+    window.deleteExpense = deleteExpense;
+    window.setBudget = setBudget;
+    window.openSetupModal = () => {
+        let newSal = prompt("Monthly Salary (₹)", appState.salary);
+        if(newSal !== null) setSalary(newSal);
+        let newGoal = prompt("Savings Goal (₹)", appState.savingsGoal);
+        if(newGoal !== null) setGoal(newGoal);
+    };
+    window.addRecurring = () => {
+        let amt = document.getElementById("recurAmt").value;
+        let cat = document.getElementById("recurCat").value;
+        if(amt && cat) { appState.recurring.push({ category: cat, amount: Number(amt), frequency: "monthly" }); if(!guestMode && currentUser) updateSettingsSupabase(); else saveGuestData(); renderApp(); }
+    };
+    window.exportCSV = () => {
+        let csvRows = [["Date","Category","Amount"]];
+        appState.expenses.forEach(e => csvRows.push([e.date, e.cat_name, e.amt]));
+        const blob = new Blob([csvRows.map(r => r.join(",")).join("\n")], {type:"text/csv"});
+        const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "paisa_export.csv"; a.click();
+    };
+    window.logout = async () => {
+        await supabase.auth.signOut();
+        currentUser = null; guestMode = false;
+        localStorage.removeItem("paisa_guest_data");
+        showAuthScreen();
+    };
+
+    // ----------------------------- ONBOARDING + AUTH -----------------------------
+    let onboardingShown = localStorage.getItem("onboardingComplete");
+
+    function showOnboarding() {
+        let slideIndex = 0;
+        const slides = [
+            { icon: "💰", title: "Paisa Manager Pro", desc: "Track every rupee, achieve every goal. Smart expense management made simple." },
+            { icon: "📊", title: "Powerful Features", desc: "Expense Tracking • Savings Goals • Budgets • Recurring • Charts • Export" },
+            { icon: "🚀", title: "Ready to Start?", desc: "Sign up for cloud backup or continue as guest" }
+        ];
+        const onbDiv = document.createElement("div"); onbDiv.className = "onboarding-overlay"; onbDiv.id = "onbOverlay";
+        const updateSlide = () => {
+            onbDiv.innerHTML = `<div class="onb-slide"><div class="onb-icon">${slides[slideIndex].icon}</div><h2>${slides[slideIndex].title}</h2><p style="margin:20px 0; color:#4B5563;">${slides[slideIndex].desc}</p><div class="dots">${slides.map((_,i)=>`<div class="dot ${i===slideIndex ? 'active' : ''}"></div>`).join("")}</div>${slideIndex < 2 ? '<button class="btn-primary" id="nextBtn">Next →</button>' : '<button class="btn-primary" id="getStartedBtn">Get Started 🚀</button>'}</div>`;
+            const nextBtn = document.getElementById("nextBtn"); const getStarted = document.getElementById("getStartedBtn");
+            if(nextBtn) nextBtn.onclick = () => { slideIndex++; updateSlide(); };
+            if(getStarted) getStarted.onclick = () => { document.body.removeChild(onbDiv); localStorage.setItem("onboardingComplete","true"); showAuthScreen(); };
+        };
+        updateSlide();
+        document.body.appendChild(onbDiv);
+    }
+
+    async function showAuthScreen() {
+        const root = document.getElementById("appRoot");
+        root.innerHTML = `<div class="container" style="text-align:center; margin-top:80px;"><div class="card"><h2>💰 Paisa Manager Pro</h2><p style="margin:20px 0;">Manage expenses, save smarter</p><input type="email" id="loginEmail" placeholder="Email"><input type="password" id="loginPassword" placeholder="Password"><button class="btn-primary" id="doLoginBtn">Login</button><button class="btn-outline" id="doSignupBtn">Create Account</button><hr><button class="btn-outline" id="guestBtn"><i class="fas fa-user-friends"></i> Continue as Guest</button></div></div>`;
+        document.getElementById("doLoginBtn").onclick = async () => {
+            const email = document.getElementById("loginEmail").value, pass = document.getElementById("loginPassword").value;
+            const { error } = await supabase.auth.signInWithPassword({ email, pass });
+            if(error) alert(error.message);
+            else { await fetchUserAfterAuth(); }
+        };
+        document.getElementById("doSignupBtn").onclick = async () => {
+            const email = document.getElementById("loginEmail").value, pass = document.getElementById("loginPassword").value;
+            const { error } = await supabase.auth.signUp({ email, password: pass });
+            if(error) alert(error.message); else alert("Check email for confirmation! (or login if already exists)");
+        };
+        document.getElementById("guestBtn").onclick = () => { guestMode = true; currentUser = null; loadGuestData(); renderApp(); };
+    }
+
+    async function fetchUserAfterAuth() {
+        const { data: { user } } = await supabase.auth.getUser();
+        if(user) {
+            currentUser = { id: user.id, email: user.email };
+            guestMode = false;
+            await fetchUserData(user.id);
+        }
+    }
+
+    async function checkAuthAndStart() {
+        const { data: { user } } = await supabase.auth.getUser();
+        if(user) { currentUser = { id: user.id }; guestMode = false; await fetchUserData(user.id); }
+        else {
+            if(!localStorage.getItem("onboardingComplete")) showOnboarding();
+            else showAuthScreen();
+        }
+    }
+    window.addNewExpense = addNewExpense;
+    window.deleteExpense = deleteExpense;
+    window.setBudget = setBudget;
+    window.openSetupModal = openSetupModal;
+    window.addRecurring = addRecurring;
+    window.exportCSV = exportCSV;
+    window.logout = logout;
+    window.setBudget = (cat,val) => { appState.budgets[cat]=Number(val); if(!guestMode && currentUser) updateSettingsSupabase(); else saveGuestData(); renderApp(); };
+    window.setSalary = setSalary;
+    window.setGoal = setGoal;
+
+    checkAuthAndStart();
 </script>
 </body>
 </html>
